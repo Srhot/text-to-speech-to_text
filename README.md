@@ -61,7 +61,7 @@
 
 ```bash
 git clone https://github.com/Srhot/text-to-speech-to_text.git
-cd multimodal-ai-workflow
+cd text-to-speech-to_text
 ```
 
 ### 2. n8n'i Başlatın
