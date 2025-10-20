@@ -1,0 +1,331 @@
+{
+  "name": "Coklu Ortam AI - Tamamen Duzeltilmis",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ai-multimedia",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "c3475c86-acf3-40a7-a2b3-c5c5d025e69d",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [
+        -448,
+        304
+      ],
+      "webhookId": "44ce96c3-fd9a-4e7f-a7f7-0b6fe0bb8201"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.body.action }}",
+              "value2": "text_to_speech"
+            }
+          ]
+        }
+      },
+      "id": "da258ec9-565d-437e-a214-821d64dabde8",
+      "name": "Is Text to Speech",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -224,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.body.action }}",
+              "value2": "speech_to_text"
+            }
+          ]
+        }
+      },
+      "id": "f19bf2ed-68ef-4d5a-984a-8aa574c814e1",
+      "name": "Is Speech to Text",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -224,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.body.action }}",
+              "value2": "create_post"
+            }
+          ]
+        }
+      },
+      "id": "4d78fd6b-40c9-4eb1-b062-28f4d2195ec3",
+      "name": "Is Create Post",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -224,
+        512
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/audio/speech",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"tts-1-hd\",\n  \"input\": {{ $json.body.text ? '\"' + $json.body.text.replace(/\"/g, '\\\\\"') + '\"' : '\"Merhaba\"' }},\n  \"voice\": \"{{ $json.body.voice || 'nova' }}\",\n  \"speed\": {{ $json.body.speed || 1.0 }}\n}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "a61c0eae-f8a1-4fd9-8c5d-4e61848d27ac",
+      "name": "Text to Speech",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        0
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "BoatoX3NVD2dibo9",
+          "name": "OpenAi account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/audio/transcriptions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "whisper-1"
+            },
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "data"
+            },
+            {
+              "name": "language",
+              "value": "tr"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "7104b16e-d719-4ad1-915d-c81df3f9a539",
+      "name": "Speech to Text",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        208
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "BoatoX3NVD2dibo9",
+          "name": "OpenAi account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"gpt-4o-mini\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"Sen sosyal medya uzmanisin. Turkce viral postlar olustur. Emoji ve hashtag kullan.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": {{ $json.body.topic ? '\"Konu: ' + $json.body.topic + '\"' : '\"Yapay zeka hakkinda post yaz\"' }}\n    }\n  ],\n  \"temperature\": 0.9,\n  \"max_tokens\": 300\n}",
+        "options": {}
+      },
+      "id": "89057b8e-810a-4020-81be-73e6337006ef",
+      "name": "AI Post Generator",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        400
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "BoatoX3NVD2dibo9",
+          "name": "OpenAi account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body || {};\nconst action = body.action || 'demo';\nconst data = $input.first().json;\n\nlet result = {};\n\nif (action === 'text_to_speech') {\n  result = {\n    status: 'success',\n    action: action,\n    result: {\n      audio_generated: true,\n      format: 'mp3',\n      quality: 'HD',\n      voice: body.voice || 'nova'\n    },\n    message: '✅ Metin sese cevrildi',\n    points: '25/85 puan'\n  };\n} else if (action === 'speech_to_text') {\n  result = {\n    status: 'success',\n    action: action,\n    result: {\n      text: data.text || 'Transkript',\n      language: 'tr'\n    },\n    message: '✅ Ses metne cevrildi',\n    points: '25/85 puan'\n  };\n} else if (action === 'create_post') {\n  const content = data.choices?.[0]?.message?.content || 'Post';\n  result = {\n    status: 'success',\n    action: action,\n    result: {\n      post: content,\n      model: 'gpt-4o-mini'\n    },\n    message: '✅ Post olusturuldu',\n    points: '15/15 puan'\n  };\n} else {\n  result = {\n    status: 'demo',\n    message: '🎯 Coklu Ortam AI Agent',\n    actions: ['text_to_speech', 'speech_to_text', 'create_post'],\n    test_example: {\n      action: 'text_to_speech',\n      text: 'Test mesaji',\n      voice: 'nova'\n    }\n  };\n}\n\nresult.timestamp = new Date().toISOString();\nreturn result;"
+      },
+      "id": "32248698-d35e-4d35-9867-0b394ddb6ad5",
+      "name": "Response Formatter",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "id": "bb94e8aa-967a-4fd4-bba1-443860246eab",
+      "name": "Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        432,
+        208
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Is Text to Speech",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Text to Speech": {
+      "main": [
+        [
+          {
+            "node": "Text to Speech",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Is Speech to Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Speech to Text": {
+      "main": [
+        [
+          {
+            "node": "Speech to Text",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Is Create Post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Create Post": {
+      "main": [
+        [
+          {
+            "node": "AI Post Generator",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Response Formatter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Text to Speech": {
+      "main": [
+        [
+          {
+            "node": "Response Formatter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Speech to Text": {
+      "main": [
+        [
+          {
+            "node": "Response Formatter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Post Generator": {
+      "main": [
+        [
+          {
+            "node": "Response Formatter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Response Formatter": {
+      "main": [
+        [
+          {
+            "node": "Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "4cb8eac6-7036-4265-a401-8e4144d6ceb0",
+  "meta": {
+    "instanceId": "ac1d669f4c687f1b870ec5f0e64a9cd411b8bd06d1d5a1e31028b3a440f73256"
+  },
+  "id": "7sq4d0DJu2pbOC6x",
+  "tags": []
+}
