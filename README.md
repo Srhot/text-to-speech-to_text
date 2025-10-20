@@ -60,7 +60,7 @@
 ### 1. Repository'yi Klonlayın
 
 ```bash
-git clone https://github.com/[USERNAME]/multimodal-ai-workflow.git
+git clone https://github.com/Srhot/text-to-speech-to_text.git
 cd multimodal-ai-workflow
 ```
 
